@@ -9,8 +9,9 @@ const { db, getGuildConfig, updateGuildConfig, getLogs, addLog } = require('../d
 const { REST, Routes } = require('discord.js');
 
 const app = express();
-const PORT = process.env.DASHBOARD_PORT || 3000;
+const PORT = process.env.PORT || process.env.DASHBOARD_PORT || 3000;
 
+app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy:false }));
 app.use(cors());
 app.use(bodyParser.json({ limit:'200kb' }));

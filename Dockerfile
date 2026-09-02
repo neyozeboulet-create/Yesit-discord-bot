@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-EXPOSE 3000
+EXPOSE 3000 8000 8080
 ENV NODE_ENV=production
-CMD ["sh", "-c", "node src/bot/index.js & node src/dashboard/server.js & wait"]
+ENV PORT=8000
+CMD ["sh", "-c", "node src/bot/index.js & PORT=${PORT:-8000} node src/dashboard/server.js & wait"]
