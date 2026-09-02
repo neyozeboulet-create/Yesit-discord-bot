@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard — Yesit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="brand-mark"><i data-lucide="shield-check"></i></div> Yesit <span style="color:var(--muted);font-weight:500">/ Dashboard</span></div>
+  <nav class="nav-links"><a href="/">Accueil</a><a href="/commands">Commandes</a><a href="/dashboard" class="active">Serveurs</a><a class="btn btn-primary" id="inviteBtn" href="#"><i data-lucide="external-link" class="icon"></i> Inviter</a></nav>
+</header>
+
+<div style="max-width:1100px;margin:0 auto;padding:24px">
+  <div class="page-head">
+    <div><h1>Vos serveurs</h1><p>Seuls les serveurs où vous êtes administrateur et où le bot est présent sont gérables.</p></div>
+    <div class="row"><input id="search" class="input" placeholder="Rechercher un serveur..." style="width:260px"><button class="btn" onclick="load()"><i data-lucide="refresh-cw" class="icon"></i> Actualiser</button></div>
+  </div>
+  <div id="grid" class="server-grid"></div>
+  <div id="empty" class="empty" style="display:none">
+    <i data-lucide="server" style="width:28px;height:28px"></i>
+    <h3>Aucun serveur trouvé</h3>
+    <p>Vérifiez que le bot est invité et que vous avez la permission Administrateur.</p>
+    <a href="#" id="emptyInvite" class="btn btn-primary" style="margin-top:10px">Inviter le bot</a>
+  </div>
+</div>
+
+<div id="toast" class="toast"><i data-lucide="info" class="icon"></i><span id="toastMsg">—</span></div>
+
+<script>
+lucide.createIcons();
+let all=[];
+async function load(){
+  const grid=document.getElementById('grid');
+  grid.innerHTML='<div class="skeleton" style="height:96px"></div><div class="skeleton" style="height:96px"></div><div class="skeleton" style="height:96px"></div>';
+  try{
+    const r=await fetch('/api/bot/guilds'); all=await r.json();
+    render();
+    const inv=await (await fetch('/api/bot/invite')).json();
+    document.getElementById('inviteBtn').href=inv.url;
+    document.getElementById('emptyInvite').href=inv.url;
+  }catch(e){ toast('Erreur chargement','error'); }
+}
+function render(){
+  const q=document.getElementById('search').value.toLowerCase();
+  const list=all.filter(g=> g.name.toLowerCase().includes(q));
+  const grid=document.getElementById('grid');
+  const empty=document.getElementById('empty');
+  if(!list.length){ grid.innerHTML=''; empty.style.display='block'; lucide.createIcons(); return; }
+  empty.style.display='none';
+  grid.innerHTML=list.map(g=>{
+    const icon=g.icon?`https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=128`:'';
+    const initials=g.name.slice(0,2).toUpperCase();
+    return `<div class="server-card" onclick="location.href='/server/${g.id}'">
+      <div class="server-icon">${icon?`<img src="${icon}">`:`<span style="font-weight:800">${initials}</span>`}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.name}</div>
+        <div style="color:var(--muted);font-size:12px">${g.memberCount?g.memberCount+' membres • ':''}${g.channels||'?'} salons • ${g.roles||'?'} rôles</div>
+      </div>
+      <span class="badge success"><i data-lucide="check" class="icon"></i> Gérable</span>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+function toast(msg){ const t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=msg; t.classList.add('show'); setTimeout(()=> t.classList.remove('show'),2600); }
+document.getElementById('search').addEventListener('input', render);
+load();
+</script>
+</body>
+</html>

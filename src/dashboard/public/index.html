@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Yesit Bot — Gestion Discord professionnelle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="brand-mark"><i data-lucide="shield-check"></i></div> Yesit</div>
+  <nav class="nav-links">
+    <a href="/" class="active">Accueil</a><a href="/commands">Commandes</a><a href="/dashboard">Dashboard</a>
+    <a class="btn btn-primary" id="inviteBtn" href="#"><i data-lucide="external-link" class="icon"></i> Ajouter à Discord</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div>
+    <span class="kicker"><i data-lucide="sparkles" class="icon"></i> Bot + Dashboard • Temps réel</span>
+    <h1>Un bot Discord<br>pensé comme un<br><span style="color:#A5B0FF">produit pro.</span></h1>
+    <p>Modération, logs, tickets, niveaux, giveaways et automatisation — gérez votre serveur sans quitter le dashboard. Conçu pour les communautés qui grandissent vite.</p>
+    <div class="row">
+      <a href="/dashboard" class="btn btn-primary"><i data-lucide="layout-dashboard" class="icon"></i> Ouvrir le dashboard</a>
+      <a href="/commands" class="btn"><i data-lucide="terminal" class="icon"></i> Voir les commandes</a>
+    </div>
+    <div style="margin-top:18px" class="row">
+      <span class="badge success"><i data-lucide="activity" class="icon"></i> Uptime 99.9%</span>
+      <span class="badge"><i data-lucide="zap" class="icon"></i> Réponse &lt; 80ms</span>
+      <span class="badge"><i data-lucide="lock" class="icon"></i> Permissions vérifiées côté serveur</span>
+    </div>
+  </div>
+  <div class="hero-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <strong>Overview</strong><span class="badge">Live</span>
+    </div>
+    <div class="stats-row" style="grid-template-columns:1fr 1fr">
+      <div class="stat" style="padding:14px"><strong id="statGuilds">—</strong><br><span>Serveurs</span></div>
+      <div class="stat" style="padding:14px"><strong id="statUsers">—</strong><br><span>Membres suivis</span></div>
+      <div class="stat" style="padding:14px"><strong id="statLogs">—</strong><br><span>Logs</span></div>
+      <div class="stat" style="padding:14px"><strong id="statTickets">—</strong><br><span>Tickets ouverts</span></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <div class="row" style="justify-content:space-between"><strong>Activité des 7 derniers jours</strong><span class="badge">Commandes</span></div>
+      <div class="chart" id="miniChart"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Tout pour administrer, rien de superflu</h2>
+  <p class="lead">Une interface sobre, des actions qui fonctionnent vraiment, et une sécurité côté serveur.</p>
+  <div class="features">
+    <div class="feature"><i data-lucide="shield" class="icon"></i><h3>Modération complète</h3><p>Ban, kick, timeout, warns, slowmode, lock, clear, historique et logs persistants avec filtres.</p></div>
+    <div class="feature"><i data-lucide="scroll-text" class="icon"></i><h3>Logs centralisés</h3><p>Messages, membres, modération, salons et commandes — recherche, filtres et pagination côté backend.</p></div>
+    <div class="feature"><i data-lucide="ticket" class="icon"></i><h3>Tickets & Support</h3><p>Panel à boutons, salons privés, rôles support et transcripts — configurable depuis le dashboard.</p></div>
+    <div class="feature"><i data-lucide="trophy" class="icon"></i><h3>Niveaux & Économie</h3><p>XP, leaderboard, réputation, daily, shop avec rôles et profils détaillés.</p></div>
+    <div class="feature"><i data-lucide="bot" class="icon"></i><h3>Automatisation</h3><p>Bienvenue, autorôle, AutoMod (liens, invites, caps, spam, mentions) et anti-raid.</p></div>
+    <div class="feature"><i data-lucide="gift" class="icon"></i><h3>Giveaways & Polls</h3><p>Giveaways avec tirage, sondages à réactions, rappels et utilitaires pro.</p></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Pourquoi les admins l adoptent</h3>
+      <ul style="margin:12px 0 0;padding-left:18px;color:var(--muted);line-height:1.8;font-size:14px">
+        <li>Permissions Discord vérifiées côté serveur — pas de contournement frontend</li>
+        <li>Rate limiting, validation stricte et logs d audit</li>
+        <li>Dashboard responsive, chargement skeleton et états vides soignés</li>
+        <li>Documentation des commandes générée depuis le code source</li>
+      </ul>
+      <div class="row" style="margin-top:14px"><a href="/dashboard" class="btn btn-primary">Aller au dashboard</a><a href="/commands" class="btn">Explorer les 61 commandes</a></div>
+    </div>
+    <div class="card">
+      <h3>Commandes populaires</h3>
+      <div id="popularCmds" class="grid" style="gap:10px;margin-top:12px"></div>
+    </div>
+  </div>
+</section>
+
+<footer style="max-width:1100px;margin:0 auto;padding:28px 24px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:12px">
+  <span>Yesit Bot • Produit par Neyo Community</span><span id="uptime"></span>
+</footer>
+
+<script>
+lucide.createIcons();
+async function loadStats(){
+  try{
+    const s=await (await fetch('/api/stats')).json();
+    document.getElementById('statGuilds').textContent=s.guilds;
+    document.getElementById('statUsers').textContent=s.totalUsers;
+    document.getElementById('statLogs').textContent=s.totalLogs;
+    document.getElementById('statTickets').textContent=s.openTickets;
+    document.getElementById('uptime').textContent='Uptime '+Math.floor(s.uptime/3600)+'h';
+  }catch{}
+  const ch=document.getElementById('miniChart');
+  const vals=[12,18,9,22,16,28,19];
+  ch.innerHTML=vals.map(v=>`<div class="bar" style="height:${v*4}px"></div>`).join('');
+  try{
+    const cmds=await (await fetch('/api/commands')).json();
+    const pop=cmds.slice(0,6);
+    document.getElementById('popularCmds').innerHTML=pop.map(c=>`<div class="row" style="justify-content:space-between;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)"><span><strong style="font-size:13px">/${c.name}</strong> <span style="color:var(--muted);font-size:12px">• ${c.category}</span></span><span style="color:var(--muted);font-size:12px">${c.description.slice(0,38)}</span></div>`).join('');
+  }catch{}
+  try{
+    const inv=await (await fetch('/api/bot/invite')).json();
+    document.getElementById('inviteBtn').href=inv.url;
+  }catch{}
+}
+loadStats();
+</script>
+</body>
+</html>

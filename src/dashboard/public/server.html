@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Serveur — Yesit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="brand-mark"><i data-lucide="shield-check"></i></div> Yesit</div>
+  <div class="row">
+    <select id="serverSwitch" class="select" style="width:240px"></select>
+    <a href="/dashboard" class="btn btn-ghost"><i data-lucide="arrow-left" class="icon"></i> Serveurs</a>
+    <a href="/" class="btn"><i data-lucide="external-link" class="icon"></i> Accueil</a>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div id="guildHeader" class="card" style="padding:12px;display:flex;gap:12px;align-items:center"></div>
+    <div class="side-title">Général</div>
+    <div class="side-link active" data-tab="overview"><i data-lucide="layout-dashboard" class="icon"></i> Vue d ensemble</div>
+    <div class="side-link" data-tab="logs"><i data-lucide="scroll-text" class="icon"></i> Logs</div>
+    <div class="side-link" data-tab="members"><i data-lucide="users" class="icon"></i> Membres</div>
+    <div class="side-title">Configuration</div>
+    <div class="side-link" data-tab="welcome"><i data-lucide="hand" class="icon"></i> Bienvenue</div>
+    <div class="side-link" data-tab="moderation"><i data-lucide="shield" class="icon"></i> Modération</div>
+    <div class="side-link" data-tab="automod"><i data-lucide="bot" class="icon"></i> AutoMod</div>
+    <div class="side-link" data-tab="tickets"><i data-lucide="ticket" class="icon"></i> Tickets</div>
+    <div class="side-link" data-tab="levels"><i data-lucide="trophy" class="icon"></i> Niveaux</div>
+    <div class="side-link" data-tab="security"><i data-lucide="lock" class="icon"></i> Sécurité</div>
+    <div class="side-title">Système</div>
+    <div class="side-link" data-tab="commands"><i data-lucide="terminal" class="icon"></i> Commandes</div>
+  </aside>
+
+  <main class="content">
+    <!-- Overview -->
+    <section id="tab-overview">
+      <div class="page-head"><div><h1 id="guildName">Chargement...</h1><p id="guildSub">—</p></div><button class="btn" onclick="refresh()"><i data-lucide="refresh-cw" class="icon"></i> Actualiser</button></div>
+      <div class="grid grid-4" id="kpis"></div>
+      <div class="grid grid-2" style="margin-top:16px">
+        <div class="card"><h3>Activité par type</h3><div class="chart" id="chart"></div><div id="chartLegend" style="color:var(--muted);font-size:12px"></div></div>
+        <div class="card"><h3>Événements récents</h3><div id="recent" class="grid" style="gap:10px;margin-top:10px"></div></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>État du bot</h3>
+        <div class="grid grid-3" style="margin-top:10px">
+          <div><div style="color:var(--muted);font-size:12px">Uptime</div><strong id="uptime">—</strong></div>
+          <div><div style="color:var(--muted);font-size:12px">Latence</div><strong id="ping">—</strong></div>
+          <div><div style="color:var(--muted);font-size:12px">Version</div><strong>2.0</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Logs -->
+    <section id="tab-logs" style="display:none">
+      <div class="page-head"><div><h1>Logs</h1><p>Recherche, filtres et pagination côté serveur.</p></div></div>
+      <div class="card">
+        <div class="grid grid-4">
+          <input id="logSearch" class="input" placeholder="User ID...">
+          <select id="logType" class="select"><option value="">Tous les types</option><option>command</option><option>message_delete</option><option>message_edit</option><option>member_join</option><option>member_leave</option><option>ban</option><option>kick</option><option>timeout</option><option>warn</option><option>clear</option><option>ticket_create</option><option>config_update</option></select>
+          <input id="logFrom" class="input" type="date"><button class="btn btn-primary" onclick="loadLogs()"><i data-lucide="search" class="icon"></i> Filtrer</button>
+        </div>
+        <div id="logs" class="grid" style="gap:10px;margin-top:14px"></div>
+        <div class="row" style="justify-content:space-between;margin-top:12px"><button class="btn" onclick="logPage(-1)">Précédent</button><span id="logInfo" style="color:var(--muted);font-size:13px"></span><button class="btn" onclick="logPage(1)">Suivant</button></div>
+      </div>
+    </section>
+
+    <!-- Members -->
+    <section id="tab-members" style="display:none">
+      <div class="page-head"><div><h1>Membres</h1><p>Top par niveau et XP.</p></div></div>
+      <div class="card"><table class="table"><thead><tr><th>User</th><th>Niveau</th><th>XP</th><th>Coins</th><th>Rep</th></tr></thead><tbody id="membersBody"></tbody></table></div>
+    </section>
+
+    <!-- Welcome -->
+    <section id="tab-welcome" style="display:none">
+      <div class="page-head"><div><h1>Bienvenue</h1><p>Message, salon et autorôle.</p></div><button class="btn btn-primary" onclick="saveWelcome()"><i data-lucide="save" class="icon"></i> Enregistrer</button></div>
+      <div class="grid grid-2">
+        <div class="card"><h3>Bienvenue</h3><label style="font-size:13px;color:var(--muted)">Salon ID</label><input id="wChannel" class="input"><label style="font-size:13px;color:var(--muted)">Message</label><textarea id="wMsg" class="textarea" rows="3"></textarea><label style="font-size:13px;color:var(--muted)"><input type="checkbox" id="wEmbed"> Embed</label><p style="color:var(--muted);font-size:12px">Variables: {user} {server} {count}</p></div>
+        <div class="card"><h3>Départ & Autorôle</h3><label style="font-size:13px;color:var(--muted)">Salon départ ID</label><input id="gChannel" class="input"><label style="font-size:13px;color:var(--muted)">Message départ</label><input id="gMsg" class="input"><label style="font-size:13px;color:var(--muted)">Autorôle ID</label><input id="autorole" class="input"><p style="color:var(--muted);font-size:12px">Laisse vide pour désactiver.</p></div>
+      </div>
+    </section>
+
+    <!-- Moderation -->
+    <section id="tab-moderation" style="display:none">
+      <div class="page-head"><div><h1>Modération</h1><p>Salons de logs et permissions.</p></div><button class="btn btn-primary" onclick="saveMod()"><i data-lucide="save" class="icon"></i> Enregistrer</button></div>
+      <div class="card grid grid-2">
+        <div><label style="font-size:13px;color:var(--muted)">Salon logs</label><input id="logChannel" class="input"><label style="font-size:13px;color:var(--muted)">Salon modlog</label><input id="modlogChannel" class="input"></div>
+        <div><label style="font-size:13px;color:var(--muted)">Anti-nuke</label><div class="row"><input type="checkbox" id="antinuke" class="switch"><span style="font-size:13px">Activer protection</span></div><label style="font-size:13px;color:var(--muted)">Raidmode</label><div class="row"><input type="checkbox" id="raidmode" class="switch"><span style="font-size:13px">Verrouiller salons</span></div></div>
+      </div>
+    </section>
+
+    <!-- AutoMod -->
+    <section id="tab-automod" style="display:none">
+      <div class="page-head"><div><h1>AutoMod</h1><p>Filtres automatiques.</p></div><button class="btn btn-primary" onclick="saveAutomod()"><i data-lucide="save" class="icon"></i> Enregistrer</button></div>
+      <div class="card">
+        <div class="grid grid-2">
+          <label class="row"><input type="checkbox" id="amLinks" class="switch"> Liens</label>
+          <label class="row"><input type="checkbox" id="amInvites" class="switch"> Invites Discord</label>
+          <label class="row"><input type="checkbox" id="amCaps" class="switch"> Caps</label>
+          <label class="row"><input type="checkbox" id="amSpam" class="switch"> Spam</label>
+          <label class="row"><input type="checkbox" id="amMentions" class="switch"> Mentions excessives</label>
+          <label class="row"><input type="checkbox" id="amEnabled" class="switch"> AutoMod global</label>
+        </div>
+        <label style="font-size:13px;color:var(--muted);margin-top:12px;display:block">Mots interdits (JSON array)</label><input id="amWords" class="input" placeholder='["mot1","mot2"]'>
+      </div>
+    </section>
+
+    <!-- Tickets -->
+    <section id="tab-tickets" style="display:none">
+      <div class="page-head"><div><h1>Tickets</h1><p>Catégorie et rôle support.</p></div><button class="btn btn-primary" onclick="saveTickets()"><i data-lucide="save" class="icon"></i> Enregistrer</button></div>
+      <div class="card grid grid-2"><div><label style="font-size:13px;color:var(--muted)">Catégorie ID</label><input id="tCat" class="input"></div><div><label style="font-size:13px;color:var(--muted)">Rôle support ID</label><input id="tRole" class="input"></div></div>
+    </section>
+
+    <!-- Levels -->
+    <section id="tab-levels" style="display:none">
+      <div class="page-head"><div><h1>Niveaux</h1><p>XP et messages de level-up.</p></div><button class="btn btn-primary" onclick="saveLevels()"><i data-lucide="save" class="icon"></i> Enregistrer</button></div>
+      <div class="card grid grid-2"><div><label class="row"><input type="checkbox" id="xpEnabled" class="switch"> XP activé</label><label style="font-size:13px;color:var(--muted)">Salon level-up ID</label><input id="lvlChannel" class="input"></div><div><label style="font-size:13px;color:var(--muted)">Message level-up</label><input id="lvlMsg" class="input"><p style="color:var(--muted);font-size:12px">{user} {level}</p></div></div>
+    </section>
+
+    <!-- Security -->
+    <section id="tab-security" style="display:none">
+      <div class="page-head"><div><h1>Sécurité</h1><p>État et vérification.</p></div></div>
+      <div class="card"><h3>Vérification</h3><label style="font-size:13px;color:var(--muted)">Rôle vérifié ID</label><input id="verifyRole" class="input"><button class="btn btn-primary" style="margin-top:10px" onclick="saveSecurity()"><i data-lucide="save" class="icon"></i> Enregistrer</button></div>
+    </section>
+
+    <!-- Commands -->
+    <section id="tab-commands" style="display:none">
+      <div class="page-head"><div><h1>Commandes</h1><p>Documentation générée depuis le code.</p></div><input id="cmdSearch" class="input" placeholder="Rechercher..." style="max-width:280px"></div>
+      <div id="cmds" class="grid" style="gap:10px"></div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast"><i data-lucide="check" class="icon"></i><span id="toastMsg">—</span></div>
+
+<script>
+const gid = location.pathname.split('/').pop();
+let cfg={}, guildInfo=null, logOffset=0;
+lucide.createIcons();
+
+async function fetchJSON(u, opts){ const r=await fetch(u,opts); if(!r.ok){ const e=await r.json().catch(()=>({error:r.statusText})); throw new Error(e.error||r.statusText); } return r.json(); }
+
+async function init(){
+  // server switch
+  try{
+    const guilds=await fetchJSON('/api/bot/guilds');
+    const sel=document.getElementById('serverSwitch');
+    sel.innerHTML=guilds.map(g=>`<option value="${g.id}" ${g.id===gid?'selected':''}>${g.name}</option>`).join('');
+    sel.onchange=e=> location.href='/server/'+e.target.value;
+  }catch{}
+  await refresh();
+}
+
+async function refresh(){
+  try{
+    const data=await fetchJSON('/api/guild/'+gid+'/overview');
+    cfg=data.config; guildInfo=data.guild;
+    document.getElementById('guildName').textContent=data.guild?.name||'Serveur '+gid;
+    document.getElementById('guildSub').textContent=(data.guild? data.guild.memberCount+' membres • '+data.guild.channels+' salons • '+data.guild.roles+' rôles' : 'Données limitées') ;
+    document.getElementById('guildHeader').innerHTML=`<div class="server-icon">${data.guild?.icon?`<img src="https://cdn.discordapp.com/icons/${gid}/${data.guild.icon}.png?size=128">`:'<i data-lucide="server"></i>'}</div><div><div style="font-weight:700">${data.guild?.name||gid}</div><div style="color:var(--muted);font-size:12px">${data.guild?.id||gid}</div></div>`;
+    lucide.createIcons();
+    // KPIs
+    document.getElementById('kpis').innerHTML=`
+      <div class="card kpi"><div><div style="color:var(--muted);font-size:12px">Membres suivis</div><strong>${data.stats.members}</strong></div><i data-lucide="users" class="icon"></i></div>
+      <div class="card kpi"><div><div style="color:var(--muted);font-size:12px">Warns</div><strong>${data.stats.warns}</strong></div><i data-lucide="triangle-alert" class="icon"></i></div>
+      <div class="card kpi"><div><div style="color:var(--muted);font-size:12px">Tickets</div><strong>${data.stats.tickets}</strong></div><i data-lucide="ticket" class="icon"></i></div>
+      <div class="card kpi"><div><div style="color:var(--muted);font-size:12px">Logs</div><strong>${data.stats.logsByType.reduce((a,b)=>a+b.c,0)}</strong></div><i data-lucide="scroll-text" class="icon"></i></div>`;
+    // chart
+    const max=Math.max(...data.stats.logsByType.map(x=>x.c),1);
+    document.getElementById('chart').innerHTML=data.stats.logsByType.length? data.stats.logsByType.map(x=>`<div class="bar" style="height:${Math.max(12, Math.round(x.c/max*100))}px" title="${x.type} ${x.c}"></div>`).join('') : '<div style="color:var(--muted);font-size:13px">Aucune donnée</div>';
+    document.getElementById('chartLegend').textContent=data.stats.logsByType.map(x=>`${x.type} ${x.c}`).join(' • ');
+    document.getElementById('recent').innerHTML=data.recentLogs.length? data.recentLogs.map(l=>`<div class="log-item"><div class="log-dot" style="background:${colorFor(l.type)}"></div><div style="flex:1"><div style="font-weight:600;font-size:13px">${l.type} <span style="color:var(--muted);font-weight:500">• <t>${new Date(l.timestamp).toLocaleString()}</t></span></div><div style="color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.content||l.reason||''}</div></div></div>`).join('') : '<div class="empty">Aucun événement récent</div>';
+    // fill forms
+    fillForms(cfg);
+    // stats
+    const s=await fetchJSON('/api/stats'); document.getElementById('uptime').textContent=Math.floor(s.uptime/3600)+'h'; document.getElementById('ping').textContent=s.uptime? 'OK':'—';
+    lucide.createIcons();
+  }catch(e){ toast(e.message,true); }
+}
+function colorFor(t){ const m={ban:'#ED4245',kick:'#F0B132',warn:'#FFAA00',command:'#5865F2',member_join:'#23A55A',message_delete:'#8B91A7'}; return m[t]||'#5865F2'; }
+function fillForms(c){
+  document.getElementById('wChannel').value=c.welcome_channel||'';
+  document.getElementById('wMsg').value=c.welcome_message||'';
+  document.getElementById('wEmbed').checked=!!c.welcome_embed;
+  document.getElementById('gChannel').value=c.goodbye_channel||'';
+  document.getElementById('gMsg').value=c.goodbye_message||'';
+  document.getElementById('autorole').value=c.autorole||'';
+  document.getElementById('logChannel').value=c.log_channel||'';
+  document.getElementById('modlogChannel').value=c.modlog_channel||'';
+  document.getElementById('antinuke').checked=!!c.antinuke;
+  document.getElementById('raidmode').checked=!!c.raidmode;
+  document.getElementById('amLinks').checked=!!c.automod_links;
+  document.getElementById('amInvites').checked=!!c.automod_invites;
+  document.getElementById('amCaps').checked=!!c.automod_caps;
+  document.getElementById('amSpam').checked=!!c.automod_spam;
+  document.getElementById('amMentions').checked=!!c.automod_mentions;
+  document.getElementById('amEnabled').checked=!!c.auto_mod;
+  document.getElementById('amWords').value=c.automod_words||'[]';
+  document.getElementById('tCat').value=c.ticket_category||'';
+  document.getElementById('tRole').value=c.ticket_support_role||'';
+  document.getElementById('xpEnabled').checked=!!c.xp_enabled;
+  document.getElementById('lvlChannel').value=c.level_channel||'';
+  document.getElementById('lvlMsg').value=c.level_message||'';
+  document.getElementById('verifyRole').value=c.verification_role||'';
+}
+async function save(path, body){ await fetchJSON('/api/guild/'+gid+'/config', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}); toast('Enregistré'); }
+function saveWelcome(){ save('', {welcome_channel: val('wChannel')||null, welcome_message: val('wMsg'), welcome_embed: el('wEmbed').checked?1:0, goodbye_channel: val('gChannel')||null, goodbye_message: val('gMsg'), autorole: val('autorole')||null}); }
+function saveMod(){ save('', {log_channel: val('logChannel')||null, modlog_channel: val('modlogChannel')||null, antinuke: el('antinuke').checked?1:0, raidmode: el('raidmode').checked?1:0}); }
+function saveAutomod(){ save('', {auto_mod: el('amEnabled').checked?1:0, automod_links: el('amLinks').checked?1:0, automod_invites: el('amInvites').checked?1:0, automod_caps: el('amCaps').checked?1:0, automod_spam: el('amSpam').checked?1:0, automod_mentions: el('amMentions').checked?1:0, automod_words: val('amWords')}); }
+function saveTickets(){ save('', {ticket_category: val('tCat')||null, ticket_support_role: val('tRole')||null}); }
+function saveLevels(){ save('', {xp_enabled: el('xpEnabled').checked?1:0, level_channel: val('lvlChannel')||null, level_message: val('lvlMsg')}); }
+function saveSecurity(){ save('', {verification_role: val('verifyRole')||null}); }
+function val(id){ return document.getElementById(id).value.trim(); }
+function el(id){ return document.getElementById(id); }
+
+// Tabs
+document.querySelectorAll('.side-link').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    document.querySelectorAll('.side-link').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    const tab=el.dataset.tab;
+    document.querySelectorAll('main .content > section, main section').forEach(s=> s.style.display='none');
+    // our sections are direct children of main
+    document.querySelectorAll('main section').forEach(s=> s.style.display='none');
+    const target=document.getElementById('tab-'+tab);
+    if(target) target.style.display='block';
+    if(tab==='logs') loadLogs();
+    if(tab==='members') loadMembers();
+    if(tab==='commands') loadCommands();
+    lucide.createIcons();
+  });
+});
+
+// Logs
+async function loadLogs(){
+  const type=val('logType'), user=val('logSearch'), from=el('logFrom').value? new Date(el('logFrom').value).getTime(): '';
+  const q=new URLSearchParams({limit:20, offset:logOffset, ...(type?{type}:{}), ...(user?{user}:{}), ...(from?{from}:{})});
+  const logs=await fetchJSON('/api/guild/'+gid+'/logs?'+q);
+  document.getElementById('logs').innerHTML=logs.length? logs.map(l=>`<div class="log-item"><div class="log-dot" style="background:${colorFor(l.type)}"></div><div style="flex:1"><div style="font-weight:600;font-size:13px">${l.type} <span style="color:var(--muted)">• ${new Date(l.timestamp).toLocaleString()} • mod:${l.moderator_id||'—'}</span></div><div style="color:var(--muted);font-size:13px">${l.content||''} ${l.reason?'— '+l.reason:''}</div><div style="color:var(--muted);font-size:11px">user:${l.user_id||'—'} target:${l.target_id||'—'} #${l.channel_id||'—'}</div></div></div>`).join('') : '<div class="empty">Aucun log pour ces filtres</div>';
+  document.getElementById('logInfo').textContent=`Offset ${logOffset} • ${logs.length} résultats`;
+}
+function logPage(d){ logOffset=Math.max(0, logOffset+d*20); loadLogs(); }
+async function loadMembers(){
+  const rows=await fetchJSON('/api/guild/'+gid+'/members');
+  document.getElementById('membersBody').innerHTML=rows.map(r=>`<tr><td>${r.id}</td><td>${r.level}</td><td>${r.xp}</td><td>${r.coins}</td><td>${r.rep}</td></tr>`).join('') || '<tr><td colspan="5" style="color:var(--muted)">Aucun membre</td></tr>';
+}
+async function loadCommands(){
+  const cmds=await fetchJSON('/api/commands');
+  const q=val('cmdSearch').toLowerCase();
+  const filt=cmds.filter(c=> !q || c.name.includes(q) || c.description.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
+  document.getElementById('cmds').innerHTML=filt.map(c=>`<div class="card" style="padding:14px"><div style="display:flex;justify-content:space-between"><strong>/${c.name}</strong><span class="badge">${c.category}</span></div><div style="color:var(--muted);font-size:13px;margin-top:6px">${c.description}</div><div style="color:var(--muted);font-size:12px;margin-top:6px">${c.options.length? c.options.map(o=> o.name).join(', ') : 'Aucun paramètre'}</div></div>`).join('');
+}
+document.getElementById('cmdSearch')?.addEventListener('input', loadCommands);
+function toast(msg, err){ const t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=msg; t.style.borderColor=err?'var(--danger)':'var(--border)'; t.classList.add('show'); setTimeout(()=> t.classList.remove('show'),2600); }
+
+init();
+</script>
+</body>
+</html>

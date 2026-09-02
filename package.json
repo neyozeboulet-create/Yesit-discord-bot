@@ -1,0 +1,27 @@
+{
+  "name": "discord-bot-dashboard",
+  "version": "1.0.0",
+  "description": "Bot Discord multifonction + Dashboard Web - Modération, Économie, Tickets, XP, IA",
+  "main": "src/bot/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "bot": "node src/bot/index.js",
+    "dashboard": "node src/dashboard/server.js",
+    "dev": "concurrently \"npm run bot\" \"npm run dashboard\"",
+    "start": "node src/bot/index.js",
+    "deploy": "node src/bot/deploy-commands.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "express": "^4.19.2",
+    "sqlite3": "^5.1.7",
+    "dotenv": "^16.4.5",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.2.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

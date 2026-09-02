@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Commandes — Yesit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="brand-mark"><i data-lucide="shield-check"></i></div> Yesit</div>
+  <nav class="nav-links"><a href="/">Accueil</a><a href="/commands" class="active">Commandes</a><a href="/dashboard">Dashboard</a></nav>
+</header>
+<div style="max-width:1100px;margin:0 auto;padding:24px">
+  <div class="page-head"><div><h1>Commandes</h1><p id="count">—</p></div><input id="search" class="input" placeholder="Rechercher une commande, catégorie..." style="max-width:360px"></div>
+  <div id="filters" class="row" style="flex-wrap:wrap;margin-bottom:14px"></div>
+  <div id="grid" class="grid grid-3"></div>
+</div>
+<script>
+lucide.createIcons();
+let all=[], active='Tous';
+async function load(){
+  const cmds=await (await fetch('/api/commands')).json();
+  all=cmds;
+  document.getElementById('count').textContent=cmds.length+' commandes';
+  const cats=['Tous',...new Set(cmds.map(c=>c.category))];
+  document.getElementById('filters').innerHTML=cats.map(c=>`<button class="btn ${c===active?'btn-primary':''}" onclick="setCat('${c}')">${c}</button>`).join('');
+  render();
+}
+function setCat(c){ active=c; document.querySelectorAll('#filters .btn').forEach(b=> b.classList.toggle('btn-primary', b.textContent===c)); render(); }
+function render(){
+  const q=document.getElementById('search').value.toLowerCase();
+  let list=all.filter(c=> active==='Tous' || c.category===active);
+  if(q) list=list.filter(c=> c.name.includes(q) || c.description.toLowerCase().includes(q));
+  document.getElementById('grid').innerHTML=list.map(c=>`<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center"><strong>/${c.name}</strong><span class="badge">${c.category}</span></div>
+    <p class="desc" style="margin-top:8px">${c.description}</p>
+    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">${c.options.length? c.options.map(o=>`<span class="badge">${o.name}${o.required?'*':''}</span>`).join('') : '<span style="color:var(--muted);font-size:12px">Aucun paramètre</span>'}</div>
+  </div>`).join('');
+}
+document.getElementById('search').addEventListener('input', render);
+load();
+</script>
+</body>
+</html>
